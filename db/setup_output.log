@@ -1,0 +1,244 @@
+-- https://tightlycoupled.io/my-goto-postgres-configuration-for-web-services/
+CREATE ROLE owner
+  LOGIN
+  ENCRYPTED PASSWORD :'password_to_save' -- https://stackoverflow.com/a/72985243/126688
+  CONNECTION LIMIT 10;
+CREATE ROLE
+ALTER ROLE owner SET statement_timeout = 20000;
+ALTER ROLE
+ALTER ROLE owner SET lock_timeout = 3000;
+ALTER ROLE
+CREATE ROLE readwrite_users NOLOGIN;
+CREATE ROLE
+CREATE ROLE readonly_users NOLOGIN;
+CREATE ROLE
+-- https://tightlycoupled.io/my-goto-postgres-configuration-for-web-services/
+--
+CREATE ROLE app WITH
+  LOGIN
+  ENCRYPTED PASSWORD :'password_to_save' -- https://stackoverflow.com/a/72985243/126688
+  CONNECTION LIMIT 90 -- because of postgres default of 100
+  IN ROLE readwrite_users;
+CREATE ROLE
+ALTER ROLE app SET statement_timeout = 1000;
+ALTER ROLE
+ALTER ROLE app SET lock_timeout = 750;
+ALTER ROLE
+-- v9.6+
+ALTER ROLE app SET idle_in_transaction_session_timeout = 1000;
+ALTER ROLE
+ALTER ROLE app SET search_path = rideshare;
+ALTER ROLE
+-- A login role
+-- https://www.crunchydata.com/blog/creating-a-read-only-postgres-user
+CREATE ROLE app_readonly
+  LOGIN
+  ENCRYPTED PASSWORD :'password_to_save'
+  CONNECTION LIMIT 3;
+CREATE ROLE
+CREATE DATABASE rideshare_development
+WITH OWNER owner
+ENCODING UTF8;
+CREATE DATABASE
+-- LC_COLLATE 'en_US.UTF-8'
+-- LC_CTYPE 'en_US.UTF-8';
+\c rideshare_development
+psql (14.15 (Ubuntu 14.15-0ubuntu0.22.04.1), server 16.6 (Debian 16.6-1.pgdg120+1))
+WARNING: psql major version 14, server major version 16.
+         Some psql features might not work.
+You are now connected to database "rideshare_development" as user "postgres".
+REVOKE ALL ON DATABASE rideshare_development FROM PUBLIC;
+REVOKE
+DROP SCHEMA public;
+DROP SCHEMA
+\c rideshare_development
+psql (14.15 (Ubuntu 14.15-0ubuntu0.22.04.1), server 16.6 (Debian 16.6-1.pgdg120+1))
+WARNING: psql major version 14, server major version 16.
+         Some psql features might not work.
+You are now connected to database "rideshare_development" as user "postgres".
+SET ROLE owner;
+SET
+CREATE SCHEMA rideshare;
+CREATE SCHEMA
+RESET ROLE;
+RESET
+-- set up owner earlier:
+-- https://tightlycoupled.io/my-goto-postgres-configuration-for-web-services/
+ALTER ROLE owner SET search_path TO rideshare;
+ALTER ROLE
+SET search_path TO rideshare;
+SET
+\c rideshare_development
+psql (14.15 (Ubuntu 14.15-0ubuntu0.22.04.1), server 16.6 (Debian 16.6-1.pgdg120+1))
+WARNING: psql major version 14, server major version 16.
+         Some psql features might not work.
+You are now connected to database "rideshare_development" as user "postgres".
+GRANT CONNECT ON DATABASE rideshare_development TO readwrite_users;
+GRANT
+GRANT TEMPORARY ON DATABASE rideshare_development TO readwrite_users;
+GRANT
+GRANT CONNECT ON DATABASE rideshare_development TO readonly_users;
+GRANT
+GRANT CONNECT ON DATABASE rideshare_development TO app_readonly;
+GRANT
+\c rideshare_development
+psql (14.15 (Ubuntu 14.15-0ubuntu0.22.04.1), server 16.6 (Debian 16.6-1.pgdg120+1))
+WARNING: psql major version 14, server major version 16.
+         Some psql features might not work.
+You are now connected to database "rideshare_development" as user "postgres".
+GRANT USAGE ON SCHEMA rideshare TO readwrite_users;
+GRANT
+GRANT USAGE ON SCHEMA rideshare TO readonly_users;
+GRANT
+-- Not needed, but being explicit helps with \dn+
+GRANT CREATE, USAGE ON SCHEMA rideshare TO owner;
+GRANT
+-- Grants for app_readonly
+GRANT USAGE ON SCHEMA rideshare TO app_readonly;
+GRANT
+GRANT SELECT ON ALL TABLES IN SCHEMA rideshare TO app_readonly;
+GRANT
+GRANT USAGE ON ALL SEQUENCES IN SCHEMA rideshare TO app_readonly;
+GRANT
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA rideshare TO app_readonly;
+GRANT
+-- Use pg_read_all_data instead of using Default Privileges
+GRANT pg_read_all_data TO app_readonly;
+GRANT ROLE
+-- Needed for: SHOW data_directory;
+-- export PGDATA="$(psql $DATABASE_URL -c 'SHOW data_directory' --tuples-only)"
+GRANT pg_read_all_settings TO owner;
+GRANT ROLE
+GRANT pg_read_all_data TO owner;
+GRANT ROLE
+GRANT pg_read_all_stats TO owner;
+GRANT ROLE
+-- https://tightlycoupled.io/my-goto-postgres-configuration-for-web-services/
+-- Schema default privileges
+-- readwrite role
+--
+\c rideshare_development
+psql (14.15 (Ubuntu 14.15-0ubuntu0.22.04.1), server 16.6 (Debian 16.6-1.pgdg120+1))
+WARNING: psql major version 14, server major version 16.
+         Some psql features might not work.
+You are now connected to database "rideshare_development" as user "postgres".
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT SELECT, INSERT, UPDATE, DELETE
+  ON TABLES
+  TO readwrite_users;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT USAGE, SELECT, UPDATE
+  ON SEQUENCES
+  TO readwrite_users;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT EXECUTE
+  ON FUNCTIONS
+  TO readwrite_users;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT USAGE
+  ON TYPES
+  TO readwrite_users;
+ALTER DEFAULT PRIVILEGES
+-- Schema
+-- readonly role
+--
+\c rideshare_development
+psql (14.15 (Ubuntu 14.15-0ubuntu0.22.04.1), server 16.6 (Debian 16.6-1.pgdg120+1))
+WARNING: psql major version 14, server major version 16.
+         Some psql features might not work.
+You are now connected to database "rideshare_development" as user "postgres".
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT SELECT
+  ON TABLES
+  TO readonly_users;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT USAGE, SELECT
+  ON SEQUENCES
+  TO readonly_users;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT EXECUTE
+  ON FUNCTIONS
+  TO readonly_users;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  IN SCHEMA rideshare
+  GRANT USAGE
+  ON TYPES
+  TO readonly_users;
+ALTER DEFAULT PRIVILEGES
+--
+-- tables, sequences, functions, types, schemas
+--
+\c rideshare_development
+psql (14.15 (Ubuntu 14.15-0ubuntu0.22.04.1), server 16.6 (Debian 16.6-1.pgdg120+1))
+WARNING: psql major version 14, server major version 16.
+         Some psql features might not work.
+You are now connected to database "rideshare_development" as user "postgres".
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  REVOKE ALL PRIVILEGES
+  ON TABLES
+  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  REVOKE ALL PRIVILEGES
+  ON SEQUENCES
+  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  REVOKE ALL PRIVILEGES
+  ON FUNCTIONS
+  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  REVOKE ALL PRIVILEGES
+  ON TYPES
+  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES
+ALTER DEFAULT PRIVILEGES
+  FOR ROLE owner
+  REVOKE ALL PRIVILEGES
+  ON SCHEMAS
+  FROM PUBLIC;
+ALTER DEFAULT PRIVILEGES
+Add to ~/.pgpass
+chmod ~/.pgpass
+
+-- DONE! 🎉
+-- Notes:
+-- Make sure 'graphviz' is installed: 'brew install graphviz'
+
+-- Next: run 'bin/rails db:migrate' to apply pending migrations
+
+-- If you ran as: 'sh db/setup.sh 2>&1 | tee -a output.log'
+-- Open the 'output.log' file and check for errors
+
+-- The ~/.pgpass file was generated or new values were added to it.
+
+-- Set the 'DATABASE_URL' env var, which you can find in the .env file:
+-- To set it in your terminal, run:
+
+-- export DATABASE_URL=postgres://owner:@localhost:5432/rideshare_development
