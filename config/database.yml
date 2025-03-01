@@ -11,16 +11,17 @@ default: &default
   schema_search_path: rideshare
   prepared_statements: true # enabled by default
   advisory_locks: true # enabled by default
+  host: postgres
   # Optional (PostgreSQL):
   # checkout_timeout, read_timeout
 
 test:
   <<: *default
-  url: postgresql://postgres:@localhost/rideshare_test
+  url: postgresql://postgres:@postgres/rideshare_test
 
 development:
   <<: *default
-  url: <%= ENV['DATABASE_URL'] %>
+  url: postgres://owner:@postgres:5432/rideshare_development
   database: rideshare_development
   variables:
     # https://www.postgresql.org/docs/current/runtime-config-client.html
