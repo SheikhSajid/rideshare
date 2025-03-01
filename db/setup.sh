@@ -15,6 +15,7 @@
 #
 # COMPATIBILITY: Requires PostgreSQL 16
 # ENV VARS: [RIDESHARE_DB_PASSWORD]
+RIDESHARE_DB_PASSWORD="C9442uXyOR8dPVc9fm"
 
 # Make sure password is set
 if [ -z "$RIDESHARE_DB_PASSWORD" ]; then
@@ -28,37 +29,37 @@ if [ -z "$RIDESHARE_DB_PASSWORD" ]; then
 fi
 
 # Set up Roles and Users on your PostgreSQL instance
-psql -h localhost -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_owner.sql
-psql -h localhost -p 5432 -U postgres -a -f db/create_role_readwrite_users.sql
-psql -h localhost -p 5432 -U postgres -a -f db/create_role_readonly_users.sql
-psql -h localhost -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_app_user.sql
-psql -h localhost -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_app_readonly.sql
+psql -h postgres -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f /var/lib/postgresql/db/create_role_owner.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/create_role_readwrite_users.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/create_role_readonly_users.sql
+psql -h postgres -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f /var/lib/postgresql/db/create_role_app_user.sql
+psql -h postgres -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f /var/lib/postgresql/db/create_role_app_readonly.sql
 
 # Set up Rideshare development database
-psql -h localhost -p 5432 -U postgres -a -f db/create_database.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/create_database.sql
 
 # Revoke database privileges on public, drop public schema
-psql -h localhost -p 5432 -U postgres -a -f db/revoke_drop_public_schema.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/revoke_drop_public_schema.sql
 
 # Create rideshare schema
-psql -h localhost -p 5432 -U postgres -a -f db/create_schema.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/create_schema.sql
 
 # Perform GRANT operations
-psql -h localhost -p 5432 -U postgres -a -f db/create_grants_database.sql
-psql -h localhost -p 5432 -U postgres -a -f db/create_grants_schema.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/create_grants_database.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/create_grants_schema.sql
 
 # Alter the default privileges
-psql -h localhost -p 5432 -U postgres -a -f db/alter_default_privileges_readwrite.sql
-psql -h localhost -p 5432 -U postgres -a -f db/alter_default_privileges_readonly.sql
-psql -h localhost -p 5432 -U postgres -a -f db/alter_default_privileges_public.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/alter_default_privileges_readwrite.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/alter_default_privileges_readonly.sql
+psql -h postgres -p 5432 -U postgres -a -f /var/lib/postgresql/db/alter_default_privileges_public.sql
 
 # Add generated password to ~/.pgpass file
 echo "Add to ~/.pgpass"
-echo "localhost:5432:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
-localhost:6432:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
-localhost:5432:rideshare_development:app:$RIDESHARE_DB_PASSWORD
-localhost:54321:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
-localhost:54322:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
+echo "postgres:5432:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
+postgres:6432:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
+postgres:5432:rideshare_development:app:$RIDESHARE_DB_PASSWORD
+postgres:54321:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
+postgres:54322:rideshare_development:owner:$RIDESHARE_DB_PASSWORD
 *:*:*:replication_user:$RIDESHARE_DB_PASSWORD
 *:*:*:app_readonly:$RIDESHARE_DB_PASSWORD" >> ~/.pgpass
 
