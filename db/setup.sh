@@ -14,7 +14,7 @@
 # place your generated password in it.
 #
 # COMPATIBILITY: Requires PostgreSQL 16
-# ENV VARS: [DB_URL, RIDESHARE_DB_PASSWORD]
+# ENV VARS: [RIDESHARE_DB_PASSWORD]
 
 # Make sure password is set
 if [ -z "$RIDESHARE_DB_PASSWORD" ]; then
@@ -26,42 +26,31 @@ if [ -z "$RIDESHARE_DB_PASSWORD" ]; then
     echo "OR generate a new value (See comments in: db/setup.sh)"
     exit 1
 fi
-# Check if the environment variable DB_URL is set
-if [ -z "$DB_URL" ]; then
-    echo "Error: 'DB_URL' not set, can't continue."
-    echo "This is the connection to your instance, using a superuser like 'postgres'."
-    echo "The password for 'postgres' is also 'postgres'"
-    echo "Connect to the 'postgres' database to issue these commands"
-    echo
-    echo "See: db/setup.sh"
-    echo "Run: export DB_URL='postgres://postgres:@localhost:5432/postgres'"
-    exit 1
-fi
 
 # Set up Roles and Users on your PostgreSQL instance
-psql $DB_URL -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_owner.sql
-psql $DB_URL -a -f db/create_role_readwrite_users.sql
-psql $DB_URL -a -f db/create_role_readonly_users.sql
-psql $DB_URL -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_app_user.sql
-psql $DB_URL -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_app_readonly.sql
+psql -h localhost -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_owner.sql
+psql -h localhost -p 5432 -U postgres -a -f db/create_role_readwrite_users.sql
+psql -h localhost -p 5432 -U postgres -a -f db/create_role_readonly_users.sql
+psql -h localhost -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_app_user.sql
+psql -h localhost -p 5432 -U postgres -v password_to_save=$RIDESHARE_DB_PASSWORD -a -f db/create_role_app_readonly.sql
 
 # Set up Rideshare development database
-psql $DB_URL -a -f db/create_database.sql
+psql -h localhost -p 5432 -U postgres -a -f db/create_database.sql
 
 # Revoke database privileges on public, drop public schema
-psql $DB_URL -a -f db/revoke_drop_public_schema.sql
+psql -h localhost -p 5432 -U postgres -a -f db/revoke_drop_public_schema.sql
 
 # Create rideshare schema
-psql $DB_URL -a -f db/create_schema.sql
+psql -h localhost -p 5432 -U postgres -a -f db/create_schema.sql
 
 # Perform GRANT operations
-psql $DB_URL -a -f db/create_grants_database.sql
-psql $DB_URL -a -f db/create_grants_schema.sql
+psql -h localhost -p 5432 -U postgres -a -f db/create_grants_database.sql
+psql -h localhost -p 5432 -U postgres -a -f db/create_grants_schema.sql
 
 # Alter the default privileges
-psql $DB_URL -a -f db/alter_default_privileges_readwrite.sql
-psql $DB_URL -a -f db/alter_default_privileges_readonly.sql
-psql $DB_URL -a -f db/alter_default_privileges_public.sql
+psql -h localhost -p 5432 -U postgres -a -f db/alter_default_privileges_readwrite.sql
+psql -h localhost -p 5432 -U postgres -a -f db/alter_default_privileges_readonly.sql
+psql -h localhost -p 5432 -U postgres -a -f db/alter_default_privileges_public.sql
 
 # Add generated password to ~/.pgpass file
 echo "Add to ~/.pgpass"
